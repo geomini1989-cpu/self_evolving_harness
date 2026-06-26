@@ -1,0 +1,18 @@
+# adapters/ticket_config.yaml
+task_metadata:
+  task_name: "复杂客诉工单解析与打标"
+  description: "将用户非结构化的客诉文本解析为标准化的 JSON 格式，以便进行工单路由。"
+
+schema:
+  core_intent: "字符串。必须是以下之一：['退款纠纷', '物流投诉', '账号封禁', '系统Bug', '虚假宣传']"
+  urgency_level: "字符串。必须是以下之一：['高', '中', '低']"
+  entities: "列表。提取文本中的关键实体，如订单号、金额等，若无则返回空列表"
+  summary: "字符串。一句话总结用户诉求，限20字以内"
+
+dataset:
+  # 后续我们将在这个路径放置带有 Ground Truth (标准答案) 的测试数据
+  path: "data/ticket_dataset.json"
+
+evaluation:
+  # 指定主要评估指标为 f1_score，对齐比武要求
+  primary_metric: "f1_score"
