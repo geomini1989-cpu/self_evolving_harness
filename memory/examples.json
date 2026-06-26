@@ -1,0 +1,209 @@
+[
+  {
+    "input": "洒出来了！！！配送太差！",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "两个多小时送到，味道一般",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "送的晚,少送了餐",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "送货超慢，已经都凉透了，饼硬的不行。",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "今天定的这个纯素的口味不太好，里头放了豆瓣酱还是什么的太浓了，有点发苦。。送餐时间太长，一共用了1个半小时多。皮蛋粥还不错。",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "先不说味道怎么样，我家离餐厅就隔了一条马路，外卖送到了还没开吃，菜汤透过袋子撒了一地，送餐的小哥我也不知道经历了什么，这服务也真是醉了",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "送餐太慢一个小时才到，而且到了都不热乎了，不好吃",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "很难吃，客服服务态度差，5：30的餐晚了一个小时",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "菜不好吃。送货时间晚，等了好久。。。",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "送个餐90分钟,呵呵,竟然送餐不知道坐电梯去B2,呵呵,我自己去拿的,呵呵,没心情吃,呵呵",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "比预期送餐时间晚一个多小时",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "都说了米线和宽面，写了备注还送错、软软的怎么吃，",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "早有耳闻,,结果配送太晚了真是黄太急了，味道还是不错的",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "可以早上点餐，中午吃。100分钟的送餐速度，让人叹为观止呀！",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "菜有点少，米饭太多了。",
+    "output": {
+      "core_intent": "退款纠纷",
+      "urgency_level": "中",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "不错~就是鸡腿肉有点少",
+    "output": {
+      "core_intent": "退款纠纷",
+      "urgency_level": "中",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "豆角排骨怎么有点辣，本来是打算给小孩吃的。。速度很快，下次试试别的",
+    "output": {
+      "core_intent": "退款纠纷",
+      "urgency_level": "中",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "量不是很大,一把人还凑合",
+    "output": {
+      "core_intent": "退款纠纷",
+      "urgency_level": "中",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "红豆软饼串味了，一股超级恶心的味道，就是没在店里，在店里我必定要你们的厨师尝尝这什么玩意。",
+    "output": {
+      "core_intent": "退款纠纷",
+      "urgency_level": "中",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "3份饭，一双筷子都没有。",
+    "output": {
+      "core_intent": "退款纠纷",
+      "urgency_level": "中",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "卷饼里的菜还不错，但是饼有点干",
+    "output": {
+      "core_intent": "退款纠纷",
+      "urgency_level": "中",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "点一次吃到一次头发究竟是为什么？？？",
+    "output": {
+      "core_intent": "退款纠纷",
+      "urgency_level": "中",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  },
+  {
+    "input": "他家不错，挺干净的，小吃还行，就是量少～",
+    "output": {
+      "core_intent": "退款纠纷",
+      "urgency_level": "中",
+      "entities": [],
+      "summary": "用户负面体验客诉处理"
+    }
+  }
+]

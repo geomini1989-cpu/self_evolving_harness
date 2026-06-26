@@ -50,27 +50,46 @@ def build_execution_prompt(config, current_skills, few_shots, input_text, meta_i
 """
     return prompt
 
-def self_consistency_generate(llm, prompt, num_samples=3):
+def self_consistency_generate(llm, prompt, num_samples=2):
     """
-    【论文引入: Agentic Systems as Boosting Weak Reasoning Models】
-    动态算力分配与自我一致性投票 (Self-Consistency / Best-of-N)
-    当系统陷入瓶颈时，并发采样多次并采用多数投票，用推理期算力换取极致准确率。
+    极限省钱版：小模型打前锋 + 早停机制
     """
-    print(f"   [Agentic Boost] 🚀 正在利用额外算力进行 {num_samples} 次并发推理与多数投票...")
-    results = []
+    import json
+    import concurrent.futures
+
+    # 1️⃣ 【第一道防线：白嫖小模型】先用极其便宜/免费的 cheap_model 跑一次 (温度0.0，走缓存)
+    try:
+        first_attempt = llm.generate(prompt, temperature=0.0, model_type="cheap", use_cache=True)
+        if first_attempt:
+            parsed = json.loads(first_attempt)
+            # 如果小模型成功输出了标准 JSON 格式，直接采用，省下大笔 Token！
+            if isinstance(parsed, dict) and "core_intent" in parsed:
+                print("   [Agentic Boost] ⚡ 小模型前锋命中！完美符合格式，提前结束采样！")
+                return first_attempt
+    except Exception:
+        pass # 小模型解析失败，没关系，继续往下走
+
+    print(f"   [Agentic Boost] ⚠️ 小模型挑战失败或格式不佳，唤醒 Default 模型并发重试...")
     
-    # 为了避免触碰大模型 API 的并发限流，这里采用顺序多次采样
-    for _ in range(num_samples):
+    # 2️⃣ 【第二道防线：Default 模型并发兜底】
+    results = []
+    def fetch_default_sample():
         try:
-            # 适当调高温度以增加采样的多样性
-            results.append(llm.generate(prompt, temperature=0.7))
-        except Exception:
-            pass
+            # 这里的兜底为了增加碰撞几率，可以用 0.7 的温度，不走缓存
+            return llm.generate(prompt, temperature=0.7, model_type="default", use_cache=False)
+        except Exception as e:
+            return None
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=num_samples) as executor:
+        futures = [executor.submit(fetch_default_sample) for _ in range(num_samples)]
+        for future in concurrent.futures.as_completed(futures):
+            res = future.result()
+            if res:
+                results.append(res)
             
     if not results:
         return "{}"
         
-    # 为保证系统稳定运行，我们直接返回最后一次的采样结果
     return results[-1]
 
 def log_metrics(epoch, f1_score):
@@ -213,21 +232,26 @@ def run_harness_loop():
         current_skills = load_skills()
         results = []
         
-        # 激活高阶干预机制 (当系统连续两轮提升缓慢时触发)
+# 激活高阶干预机制 (当系统连续两轮提升缓慢时触发)
         meta_intervention = (stuck_counter >= 2)
         
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
             future_to_data = {}
             for data in golden_dataset:
                 current_input = data["input"]
                 few_shots = memory_bank.get_few_shots(current_input, k=1)
                 prompt = build_execution_prompt(config, current_skills, few_shots, current_input, meta_intervention)
                 
-                # 如果开启了干预，则调用多算力投票采样；否则常规单次生成
-                if meta_intervention:
-                    future = executor.submit(self_consistency_generate, llm, prompt, 3)
+                # 【核心省钱优化】：仅对"高难度"或"曾错过"的数据投入多倍算力
+                # 如果能在 memory_bank 找到 100% 匹配的成功历史，说明这是简单题，强制单次生成！
+                is_easy_case = (len(few_shots) > 0 and current_input in few_shots)
+                
+                if meta_intervention and not is_easy_case:
+                    # 难点数据，降级为 2 次采样（原本是 3 次，2 次其实足以打破思维僵局，立省 33%）
+                    future = executor.submit(self_consistency_generate, llm, prompt, 2)
                 else:
-                    future = executor.submit(llm.generate, prompt)
+                    # 简单数据或正常轮次，执行常规的单次低成本生成
+                    future = executor.submit(llm.generate, prompt, temperature=0.0, model_type="default", use_cache=True)
                     
                 future_to_data[future] = (data, prompt)
                 
@@ -285,7 +309,7 @@ def run_harness_loop():
             else:
                 stuck_counter = 0
             
-        time.sleep(1)
+        #time.sleep(1)
 
 if __name__ == "__main__":
     run_harness_loop()

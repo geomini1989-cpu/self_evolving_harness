@@ -42,7 +42,7 @@ class SkillAttributor:
         
         print("🔍 [Attributor] 正在调用大模型进行病理诊断与归因分析...")
         # 调用大模型生成结构化反思
-        suggestion = self.llm.generate(diagnostic_prompt)
+        suggestion = self.llm.generate(diagnostic_prompt, model_type="smart")
         
         # 解析大模型返回的诊断 JSON (增加极强的鲁棒性兼容)
         try:
