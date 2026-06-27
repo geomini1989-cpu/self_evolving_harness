@@ -21,6 +21,22 @@ class TaskEvaluator:
             return json.loads(text)
         except json.JSONDecodeError:
             return None
+    def _calculate_list_f1(self, pred_list, gt_list):
+        """新增：计算实体列表的 F1 分数，避免顺序不同导致误判"""
+        if not isinstance(pred_list, list) or not isinstance(gt_list, list):
+            return 0.0
+        set_pred, set_gt = set(str(x).strip() for x in pred_list), set(str(x).strip() for x in gt_list)
+        if not set_pred and not set_gt:
+            return 1.0 
+        if not set_pred or not set_gt:
+            return 0.0
+        
+        intersection = len(set_pred & set_gt)
+        precision = intersection / len(set_pred)
+        recall = intersection / len(set_gt)
+        if precision + recall == 0:
+            return 0.0
+        return 2 * (precision * recall) / (precision + recall)
 
     def evaluate(self, prediction_text, ground_truth_dict):
         """
@@ -42,34 +58,44 @@ class TaskEvaluator:
         result["is_valid_json"] = True
 
         # 2. 字段比对与 F1 计算
-        correct_fields = 0
+        total_score = 0.0
         total_fields = len(self.schema_keys)
-        missing_keys = []
-        wrong_values = []
+        errors = []
 
         for key in self.schema_keys:
             if key not in pred_dict:
-                missing_keys.append(key)
+                errors.append(f"缺失关键字段: {key}")
                 continue
             
-            # 这里进行简单的字符串匹配评估（业务上可根据需采用模糊匹配）
-            if str(pred_dict.get(key)) == str(ground_truth_dict.get(key)):
-                correct_fields += 1
+            pred_val = pred_dict.get(key)
+            gt_val = ground_truth_dict.get(key)
+
+            if isinstance(gt_val, list):
+                # 实体列表采用 F1 评估
+                score = self._calculate_list_f1(pred_val, gt_val)
+                total_score += score
+                if score < 1.0:
+                    errors.append(f"列表字段 '{key}' 匹配度低 (F1: {score:.2f})")
+            elif key == 'summary':
+                # 摘要文本采用词级/字级重合度近似评估
+                set_p, set_g = set(str(pred_val)), set(str(gt_val))
+                overlap = len(set_p & set_g) / max(len(set_g), 1)
+                if overlap > 0.5:  
+                    total_score += 1.0
+                else:
+                    errors.append(f"字段 '{key}' 语义偏差较大")
             else:
-                wrong_values.append(key)
+                # 核心意图和紧急程度必须严格匹配
+                if str(pred_val).strip() == str(gt_val).strip():
+                    total_score += 1.0
+                else:
+                    errors.append(f"字段 '{key}' 取值错误 (预测: {pred_val} vs 真实: {gt_val})")
 
         # 3. 计算最终指标
-        accuracy = correct_fields / total_fields
-        result["f1_score"] = accuracy # 在此简化场景中，我们将准确率等价为 F1 表现
-        result["exact_match"] = (correct_fields == total_fields)
+        result["f1_score"] = total_score / total_fields if total_fields > 0 else 0.0
+        result["exact_match"] = (len(errors) == 0)
 
-        # 4. 生成错误诊断（供后续 Attributor 归因使用）
         if not result["exact_match"]:
-            errors = []
-            if missing_keys:
-                errors.append(f"缺失关键字段: {', '.join(missing_keys)}")
-            if wrong_values:
-                errors.append(f"字段取值错误(与Ground Truth不符): {', '.join(wrong_values)}")
             result["error_reason"] = " | ".join(errors)
 
         return result

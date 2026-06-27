@@ -6,15 +6,43 @@ import re
 
 class MemoryBank:
     def __init__(self):
-        self.few_shots = []
-        self.skills_db = {} # 🚀 新增：结构化的技能库字典
-        self._load_few_shots()
-        self._parse_skills_from_md() # 初始化时自动解析技能
+        # 修复：统一变量名为 examples，与下方的 get_few_shots 保持一致
+        self.examples = [] 
+        self.skills_db = {} 
+        self._load_few_shots()       # 核心修复：现在有这个方法了
+        self._parse_skills_from_md() 
+
+    def _load_few_shots(self):
+        """新增：从本地加载成功的历史案例"""
+        self.examples_file = "memory/examples.json"
+        if os.path.exists(self.examples_file):
+            try:
+                with open(self.examples_file, "r", encoding="utf-8") as f:
+                    self.examples = json.load(f)
+            except Exception:
+                self.examples = []
+        else:
+            self.examples = []
+
+    def add_successful_case(self, input_text, output_json):
+        """新增：将成功的案例追加到记忆库中，供主循环调用并作为后续 Few-shot 使用"""
+        # 防止重复添加同一个 input
+        if any(ex.get('input') == input_text for ex in self.examples):
+            return
+            
+        self.examples.append({
+            "input": input_text,
+            "output": output_json
+        })
+        
+        # 持久化保存到本地文件
+        os.makedirs(os.path.dirname(self.examples_file), exist_ok=True)
+        with open(self.examples_file, "w", encoding="utf-8") as f:
+            json.dump(self.examples, f, ensure_ascii=False, indent=2)
 
     def _parse_skills_from_md(self):
         """
         【SkillOS】将扁平的 SKILL.md 解析为按意图分类的技能字典
-        假设后续 Evolver 写入规则时，采用格式：## [退款纠纷] 识别潜在退款威胁
         """
         skill_file = "memory/SKILL.md"
         if not os.path.exists(skill_file):
@@ -55,11 +83,10 @@ class MemoryBank:
              return "未检索到针对当前场景的专属技能规则，请依赖基础大模型逻辑判断。"
              
         return "\n\n".join(retrieved_skills)
+
     def get_few_shots(self, current_input, k=2):
         """
         获取 Few-shot 示例。
-        进阶做法是引入向量检索 (ChromaDB) 找最相似的文本。
-        这里作为轻量级闭环演示，采用随机抽取即可展现框架能力。
         """
         if not self.examples:
             return ""
@@ -72,3 +99,7 @@ class MemoryBank:
         for i, ex in enumerate(chosen_examples):
             few_shot_prompt += f"示例 {i+1}:\n输入: {ex['input']}\n输出: {json.dumps(ex['output'], ensure_ascii=False)}\n\n"
         return few_shot_prompt
+    def refresh_skills(self):
+        """🔄 [核心修复] 清除内存中的旧技能，从磁盘重新加载最新进化的规则补丁"""
+        self.skills_db = {}
+        self._parse_skills_from_md()

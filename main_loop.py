@@ -270,6 +270,8 @@ def run_harness_loop():
         epoch_total_f1 = 0.0
         bad_case = None 
         
+        memory_bank.refresh_skills()
+        
         current_skills = load_skills()
         results = []
         
@@ -370,8 +372,11 @@ def run_harness_loop():
             
             baseline_f1 = avg_f1
             new_f1, success = evolver.apply_patch_with_rollback(
-                attributor=attributor, patch_data=patch, config=config,
-                golden_set=golden_dataset, build_prompt_func=build_execution_prompt,
+                attributor=attributor, 
+                patch_data=patch, 
+                config=config,
+                golden_set=golden_dataset, 
+                build_prompt_func=build_batch_execution_prompt, # <--- 替换为批量函数
                 baseline_f1=baseline_f1
             )
             

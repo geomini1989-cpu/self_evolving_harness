@@ -1,92 +1,137 @@
 [
   {
-    "input": "太咸了，怎么可以这么咸，一边喝水一边吃煎饼……",
-    "output": {
-      "core_intent": "退款纠纷",
-      "urgency_level": "中",
-      "entities": [],
-      "summary": "用户负面体验客诉处理"
-    }
-  },
-  {
-    "input": "应该是最后一次点。。",
-    "output": {
-      "core_intent": "退款纠纷",
-      "urgency_level": "中",
-      "entities": [],
-      "summary": "用户负面体验客诉处理"
-    }
-  },
-  {
-    "input": "超级不好吃。。。",
-    "output": {
-      "core_intent": "退款纠纷",
-      "urgency_level": "中",
-      "entities": [],
-      "summary": "用户负面体验客诉处理"
-    }
-  },
-  {
-    "input": "就在家附近，以前总去吃，可是近两三个月以来菜品没有以前好吃了，大拌菜拌苦菊一类的菜总是很甜，估计是商家为了省事就放在糖水里泡着，炒菜用的油也没以前好了，我老公胃敏感，能吃出来，油不好他会胃疼的，估计价格亲民后成本太高商家就开始糊弄事儿了，现在基本不爱来这里了，宁愿绕道去上品粥面，店员服务也没以前那么好了…好的东西贵在坚持，希望商家有心能懂这些，哪怕提升价格也别降低质量，否则日久天长损失的还是自己",
-    "output": {
-      "core_intent": "退款纠纷",
-      "urgency_level": "中",
-      "entities": [],
-      "summary": "用户负面体验客诉处理"
-    }
-  },
-  {
-    "input": "超级慢，配送态度也差，感觉就他家牛逼似的",
+    "input": "每次都是，打电话说餐到了，结果下楼等了很久才到！送餐员就是怕等，让我等很久！！！",
     "output": {
       "core_intent": "物流投诉",
       "urgency_level": "高",
       "entities": [],
-      "summary": "用户负面体验客诉处理"
+      "summary": "用户通过关心送餐员间接表达对配送服务的不满/负面体验"
     }
   },
   {
-    "input": "送过来都已经凉的不能在凉了，你是从冰箱里拿出来的？那麻烦热热可以么？再也不会订",
+    "input": "今天天气很冷，送餐师傅辛苦啦",
     "output": {
       "core_intent": "物流投诉",
       "urgency_level": "高",
       "entities": [],
-      "summary": "用户负面体验客诉处理"
+      "summary": "用户通过关心送餐师傅间接表达对配送服务的不满/负面体验"
     }
   },
   {
-    "input": "呵呵,，,真可以，之前感觉您家特别实惠。没想到这次缩水到这种程度！！！一共就这么几块肉！",
+    "input": "赞！超级好吃！,配送,保温,全部高大上！",
     "output": {
-      "core_intent": "退款纠纷",
-      "urgency_level": "中",
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
       "entities": [],
-      "summary": "用户负面体验客诉处理"
+      "summary": "用户通过关心送餐师傅间接表达对配送服务的不满/负面体验"
     }
   },
   {
-    "input": "味道一般般，量好少",
+    "input": "都打电话确认两次了，跟我说已经取消了，结果还是送了。本着助人为乐的原则，我还是付款了。",
     "output": {
-      "core_intent": "退款纠纷",
-      "urgency_level": "中",
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
       "entities": [],
-      "summary": "用户负面体验客诉处理"
+      "summary": "用户通过关心送餐师傅间接表达对配送服务的不满/负面体验"
     }
   },
   {
-    "input": "肉特别软，感觉肉质巨差",
+    "input": "能再慢点吗？？！！",
     "output": {
-      "core_intent": "退款纠纷",
-      "urgency_level": "中",
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
       "entities": [],
-      "summary": "用户负面体验客诉处理"
+      "summary": "用户通过关心送餐师傅间接表达对配送服务的不满/负面体验"
     }
   },
   {
-    "input": "蔬菜一起煮汤里就不太好了，味道还是没的说，在这家买过好几次了，很喜欢。",
+    "input": "好吃就是太慢了",
     "output": {
-      "core_intent": "退款纠纷",
-      "urgency_level": "中",
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
       "entities": [],
-      "summary": "用户负面体验客诉处理"
+      "summary": "用户通过关心[骑手/配送员]间接表达对[配送环节]的不满/负面体验"
+    }
+  },
+  {
+    "input": "点心好.送货人员服务态度也非常好.赞一个。",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户通过关心[送货人员]间接表达对[服务环节]的不满/负面体验"
+    }
+  },
+  {
+    "input": "赶上人员不够没人配送,时间太长了,食物被水汽泡了",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户通过关心送餐师傅间接表达对配送服务的不满/负面体验"
+    }
+  },
+  {
+    "input": "快递小哥很赞,这么冷的天辛苦了",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户通过关心送餐师傅间接表达对配送服务的不满/负面体验"
+    }
+  },
+  {
+    "input": "送餐的只送到楼下，不送上楼，下次不订了。",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户通过关心送餐师傅间接表达对配送服务的不满/负面体验"
+    }
+  },
+  {
+    "input": "汤面类还是不要点吧，送来味道大打折扣。其他都不错。",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户通过关心送餐员间接表达对配送服务的不满/负面体验"
+    }
+  },
+  {
+    "input": "不仅送餐慢，还特难吃。红油抄手全是酱油汁，土豆饼三根土豆丝味道很差，总之太垃圾啦。以后不会再来。",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户通过关心送餐师傅间接表达对配送服务的不满/负面体验"
+    }
+  },
+  {
+    "input": "送的有点慢…酱香卷还是很好吃的",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户通过关心送餐师傅间接表达对配送服务的不满/负面体验"
+    }
+  },
+  {
+    "input": "这店垃圾。一个多小时才送。,而且量小。,谁吃谁上当",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户通过关心送餐师傅间接表达对配送服务的不满/负面体验"
+    }
+  },
+  {
+    "input": "送错了，订的不辣饭，结果2个菜都是辣的",
+    "output": {
+      "core_intent": "物流投诉",
+      "urgency_level": "高",
+      "entities": [],
+      "summary": "用户通过关心送餐师傅间接表达对配送服务的不满/负面体验"
     }
   }
 ]

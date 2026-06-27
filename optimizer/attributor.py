@@ -9,61 +9,42 @@ class SkillAttributor:
         # 确保 memory 目录存在
         os.makedirs(os.path.dirname(self.skill_file), exist_ok=True)
 
-    def analyze_root_cause(self, eval_result, current_input, prediction_text, ground_truth):
-        """
-        核心归因逻辑：让大模型像“外科医生”一样诊断错误，并生成具体的修复补丁 (Patch)
-        """
-        diagnostic_prompt = f"""你是一个顶级的 AI 系统诊断引擎。以下是一次大模型在“复杂客诉解析”任务中的执行失败记录。
+    def analyze_root_cause(self, eval_result, current_input, prediction_text, ground_truth, max_retries=2):
+        """修改：带有自我纠错重试机制的归因诊断"""
+        base_prompt = f"""你是一个顶级的 AI 系统诊断引擎。以下是一次大模型在“复杂客诉解析”任务中的执行失败记录。
+        【用户输入】：{current_input}
+        【真实标签】：{json.dumps(ground_truth, ensure_ascii=False)}
+        【模型输出】：{prediction_text}
+        【评估报错】：{eval_result.get('error_reason')}
 
-        【用户输入文本】：
-        {current_input}
-
-        【期望的正确输出 (Ground Truth)】：
-        {json.dumps(ground_truth, ensure_ascii=False)}
-
-        【模型的实际输出】：
-        {prediction_text}
-
-        【系统评估报错诊断】：
-        {eval_result.get('error_reason', '字段不匹配或解析失败')}
-
-        请按以下步骤进行结构化诊断：
-        1. 分析大模型为什么会做错（根因分析）。它是因为没看懂黑话？还是忽略了多个诉求中的主要矛盾？
-        2. 归类错误类型，必须从以下选择：[格式损坏、实体遗漏、意图分类错误、业务逻辑冲突、领域知识盲区]。
-        3. 提出一条极其明确、简短的【新增强制规则 (Patch)】，用于指导大模型下次不要犯同样的错误。规则应该具有通用性，而不是只针对这一句话。
-
-        【强制输出格式】：请严格返回纯 JSON 对象，绝对不要包含 markdown 代码块包裹，也不要任何引导语。JSON结构必须如下：
+        请结构化诊断并返回严格的纯 JSON 对象，格式如下：
         {{
             "error_category": "填入错误类别",
             "root_cause_analysis": "简短的根本原因分析",
             "proposed_rule": "【强制规则】当遇到...情况时，必须..."
-        }}
-        """
+        }}"""
         
-        print("🔍 [Attributor] 正在调用大模型进行病理诊断与归因分析...")
-        # 调用大模型生成结构化反思
-        suggestion = self.llm.generate(diagnostic_prompt, model_type="smart")
-        
-        # 解析大模型返回的诊断 JSON (增加极强的鲁棒性兼容)
-        try:
-            # 清理可能存在的 markdown 代码块标记 (使用 \`{3} 替代直接输入反引号，避免前端渲染Bug)
-            cleaned_suggestion = re.sub(r'\`{3}(?:json)?(.*?)\`{3}', r'\1', suggestion, flags=re.DOTALL).strip()
+        current_prompt = base_prompt
+        for attempt in range(max_retries):
+            suggestion = self.llm.generate(current_prompt, model_type="smart")
             
-            # 如果模型依然返回了非 JSON 字符，尝试用正则提取花括号内容
-            if not cleaned_suggestion.startswith('{'):
-                match = re.search(r'\{.*?\}', cleaned_suggestion, re.DOTALL)
-                if match:
-                    cleaned_suggestion = match.group(0)
-                    
-            patch_data = json.loads(cleaned_suggestion)
-            return patch_data
-        except Exception as e:
-            print(f"⚠️ [Attributor] 归因引擎解析自身输出失败: {e}\n模型原输出: {suggestion}")
-            return {
-                "error_category": "归因引擎解析失败",
-                "root_cause_analysis": "大模型未按要求返回合法的 JSON 诊断结果。",
-                "proposed_rule": None
-            }
+            try:
+                cleaned_suggestion = re.sub(r'\`{3}(?:json)?(.*?)\`{3}', r'\1', suggestion, flags=re.DOTALL).strip()
+                if not cleaned_suggestion.startswith('{'):
+                    match = re.search(r'\{.*?\}', cleaned_suggestion, re.DOTALL)
+                    if match: cleaned_suggestion = match.group(0)
+                        
+                patch_data = json.loads(cleaned_suggestion)
+                if "proposed_rule" in patch_data:
+                    return patch_data
+                raise ValueError("缺少 proposed_rule 字段")
+            except Exception as e:
+                print(f"⚠️ [Attributor] 解析 JSON 失败 (尝试 {attempt+1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    # 动态追加报错上下文进行重试
+                    current_prompt = base_prompt + f"\n\n⚠️ 【警告】解析失败: {e}。请检查格式，务必只输出合法 JSON！\n你的错误输出：{suggestion}"
+                else:
+                    return {"error_category": "归因引擎解析失败", "root_cause_analysis": "未能返回合法 JSON", "proposed_rule": None}
 
     def apply_patch(self, patch_data):
         """
