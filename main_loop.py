@@ -24,7 +24,7 @@ def load_skills():
 
 def build_execution_prompt(config, current_skills, few_shots, input_text, meta_intervention=False):
     """组装执行期的 Prompt"""
-    schema_str = json.dumps(config['schema'], ensure_ascii=False, indent=2)
+    schema_str = json.dumps(config['schema'], ensure_ascii=False, separators=(',', ':'))
     
     # 【论文引入: HyperAgents】动态高阶干预
     meta_prompt = ""
@@ -50,6 +50,47 @@ def build_execution_prompt(config, current_skills, few_shots, input_text, meta_i
 """
     return prompt
 
+
+# 1. 在 main_loop.py 中替换/新增批量 Prompt 构建函数
+def build_batch_execution_prompt(config, current_skills, few_shots, batch_texts, meta_intervention=False):
+    """组装执行期的批量 Prompt，大幅节省系统提示词的 Token"""
+    schema_str = json.dumps(config['schema'], ensure_ascii=False, indent=2)
+    
+    meta_prompt = ""
+    if meta_intervention:
+        meta_prompt = "【⚡ Meta-Agent 紧急指令】系统检测到当前进化遭遇局部瓶颈！请跳出固有定势！\n"
+
+    # 将多条文本拼接带上序号
+    batch_text_str = "\n".join([f"[{i+1}] {text}" for i, text in enumerate(batch_texts)])
+
+    prompt = f"""你是一个智能业务打标助手。请严格按照要求批量解析以下文本：
+
+【任务目标】
+{config['task_metadata']['description']}
+
+{meta_prompt}
+【输出格式要求】 (严格输出一个 JSON 数组 (Array)，包含 {len(batch_texts)} 个对象，顺序与待处理文本一一对应)
+[
+  {schema_str}
+]
+
+【当前生效的业务技能(Skills)】
+{current_skills}
+
+{few_shots}
+
+【待处理的文本列表】
+{batch_text_str}
+"""
+    return prompt
+
+# 2. 辅助函数：将数据集分块
+def chunk_dataset(dataset, batch_size=5):
+    """将数据切分为指定大小的批次"""
+    for i in range(0, len(dataset), batch_size):
+        yield dataset[i:i + batch_size]
+
+        
 def self_consistency_generate(llm, prompt, num_samples=2):
     """
     极限省钱版：小模型打前锋 + 早停机制
@@ -235,37 +276,47 @@ def run_harness_loop():
 # 激活高阶干预机制 (当系统连续两轮提升缓慢时触发)
         meta_intervention = (stuck_counter >= 2)
         
+        # 3. 修改 run_harness_loop 里面的主处理逻辑
+# （替换原有 with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor: 下面的逻辑）
+
+        # 定义批次大小，建议设为 5-10 之间，平衡容错率与 Token 消耗
+        BATCH_SIZE = 5 
+        
         with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
-            future_to_data = {}
-            for data in golden_dataset:
-                current_input = data["input"]
-                few_shots = memory_bank.get_few_shots(current_input, k=1)
-                prompt = build_execution_prompt(config, current_skills, few_shots, current_input, meta_intervention)
+            future_to_batch = {}
+            for batch_data in chunk_dataset(golden_dataset, batch_size=BATCH_SIZE):
+                batch_inputs = [data["input"] for data in batch_data]
                 
-                # 【核心省钱优化】：仅对"高难度"或"曾错过"的数据投入多倍算力
-                # 如果能在 memory_bank 找到 100% 匹配的成功历史，说明这是简单题，强制单次生成！
-                is_easy_case = (len(few_shots) > 0 and current_input in few_shots)
+                # 这里可以随机取 1 个样本作为通用 few-shot 避免 token 过长
+                few_shots = memory_bank.get_few_shots(batch_inputs[0], k=1) 
                 
-                if meta_intervention and not is_easy_case:
-                    # 难点数据，降级为 2 次采样（原本是 3 次，2 次其实足以打破思维僵局，立省 33%）
-                    future = executor.submit(self_consistency_generate, llm, prompt, 2)
-                else:
-                    # 简单数据或正常轮次，执行常规的单次低成本生成
-                    future = executor.submit(llm.generate, prompt, temperature=0.0, model_type="default", use_cache=True)
-                    
-                future_to_data[future] = (data, prompt)
+                prompt = build_batch_execution_prompt(config, current_skills, few_shots, batch_inputs, meta_intervention)
                 
-            for future in concurrent.futures.as_completed(future_to_data):
-                data, prompt = future_to_data[future]
+                # 直接使用 default 模型进行批处理，设置 max_tokens 限制总输出
+                future = executor.submit(llm.generate, prompt, temperature=0.0, model_type="default", use_cache=True, max_tokens=1500)
+                future_to_batch[future] = (batch_data, prompt)
+                
+            for future in concurrent.futures.as_completed(future_to_batch):
+                batch_data, prompt = future_to_batch[future]
                 try:
                     prediction_text = future.result()
-                    eval_result = evaluator.evaluate(prediction_text, data["ground_truth"])
-                    results.append({
-                        "data": data, "prompt": prompt, 
-                        "prediction": prediction_text, "eval_result": eval_result
-                    })
+                    # 尝试解析返回的 JSON 数组
+                    parsed_array = evaluator._extract_json_from_text(prediction_text) 
+                    
+                    if not isinstance(parsed_array, list) or len(parsed_array) != len(batch_data):
+                        print(f"⚠️ 批处理解析对齐失败，模型未返回期望长度的数组。")
+                        continue
+                        
+                    # 将批量结果拆包打平，对接原有的评估体系
+                    for idx, data in enumerate(batch_data):
+                        single_prediction = json.dumps(parsed_array[idx], ensure_ascii=False)
+                        eval_result = evaluator.evaluate(single_prediction, data["ground_truth"])
+                        results.append({
+                            "data": data, "prompt": prompt, 
+                            "prediction": single_prediction, "eval_result": eval_result
+                        })
                 except Exception as exc:
-                    print(f"⚠️ 生成时发生异常: {exc}")
+                    print(f"⚠️ 批量生成时发生异常: {exc}")
                     
         for res in results:
             eval_result = res["eval_result"]

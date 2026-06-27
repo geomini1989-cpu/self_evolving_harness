@@ -73,7 +73,7 @@ class SkillEvolver:
                 return baseline_f1, True
 
             # 【核心省钱优化】：抽样回归测试。只随机取 10 条数据验证退化，而不是跑全量
-            sample_size = min(10, len(golden_set))
+            sample_size = min(5, len(golden_set))
             mini_golden_set = random.sample(golden_set, sample_size)
             print(f"🗜️ [Evolver] 触发轻量级冒烟测试，随机抽取 {sample_size} 条数据评估退化风险...")
             

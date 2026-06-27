@@ -24,16 +24,16 @@ class BaseLLMClient:
         
         # 🎯 根据免费额度列表精准配置的黄金铁三角：
         # 1. 经验回放/冒烟测试用：极速轻量的 Flash 模型
-        self.cheap_model = "qwen3.6-flash" 
+        self.cheap_model = "kimi-k2.6" 
         
         # 2. 主循环日常跑数用：兼顾性能与效率的 Plus 模型
-        self.default_model = "qwen3.5-plus-2026-04-20" 
+        self.default_model = "kimi-k2.6" 
         
         # 3. 归因诊断/规则编写用：高智商的 Max 旗舰模型
-        self.smart_model = "qwen3.6-plus-2026-04-02" 
+        self.smart_model = "kimi-k2.6" 
         
         self.cache = {}
-    def generate(self, prompt, temperature=0.7, model_type="default", use_cache=True):
+    def generate(self, prompt, temperature=0.7, model_type="default", use_cache=True,max_tokens=600):
         """
         :param use_cache: 默认开启缓存。如果需要强制模型重新思考（如温度>0的创造性任务），可设为 False
         """
@@ -54,7 +54,8 @@ class BaseLLMClient:
             response = self.client.chat.completions.create(
                 model=target_model,
                 messages=[{"role": "user", "content": prompt}],
-                temperature=temperature
+                temperature=temperature,
+                max_tokens=max_tokens
             )
             result = response.choices[0].message.content
             
@@ -72,7 +73,8 @@ class BaseLLMClient:
                 response = self.client.chat.completions.create(
                     model=self.default_model,
                     messages=[{"role": "user", "content": prompt}],
-                    temperature=temperature
+                    temperature=temperature,
+                    max_tokens=max_tokens
                 )
                 return response.choices[0].message.content
             raise e
