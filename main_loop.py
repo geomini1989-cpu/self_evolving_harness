@@ -286,13 +286,34 @@ def run_harness_loop():
             future_to_batch = {}
             for batch_data in chunk_dataset(golden_dataset, batch_size=BATCH_SIZE):
                 batch_inputs = [data["input"] for data in batch_data]
+                batch_text_str = "\n".join([f"- {text[:50]}..." for text in batch_inputs]) # 截断探路文本，极致省钱
                 
-                # 这里可以随机取 1 个样本作为通用 few-shot 避免 token 过长
+                # 🚀【SkillOS 核心】：廉价模型探路 (Scouting)
+                # 消耗几百 Token 用 cheap 模型快速打标，避免 Default 模型加载冗余技能
+                scout_prompt = f"""
+                请快速扫描以下客诉文本片段，指出它们可能涉及哪些业务类别？
+                候选类别: ['退款纠纷', '物流投诉', '账号封禁', '系统Bug', '虚假宣传']
+                只需输出包含的候选类别名称，用逗号分隔，不要多余废话。
+                文本片段：
+                {batch_text_str}
+                """
+                try:
+                    # 调用极速 Flash 模型
+                    scout_result = llm.generate(scout_prompt, temperature=0.0, model_type="cheap", max_tokens=50)
+                    # 简单清洗并提取类别
+                    active_categories = [cat for cat in ['退款纠纷', '物流投诉', '账号封禁', '系统Bug', '虚假宣传'] if cat in scout_result]
+                except Exception:
+                    active_categories = [] # 探路失败则默认不挂载特殊技能
+                
+                # 🚀 根据探路结果，精准提取关联技能！
+                current_skills = memory_bank.get_skills_by_categories(active_categories)
+                
                 few_shots = memory_bank.get_few_shots(batch_inputs[0], k=1) 
                 
+                # 组装 Prompt，此时注入的 current_skills 是高度浓缩和相关的
                 prompt = build_batch_execution_prompt(config, current_skills, few_shots, batch_inputs, meta_intervention)
                 
-                # 直接使用 default 模型进行批处理，设置 max_tokens 限制总输出
+                # 提交给主干模型处理
                 future = executor.submit(llm.generate, prompt, temperature=0.0, model_type="default", use_cache=True, max_tokens=1500)
                 future_to_batch[future] = (batch_data, prompt)
                 
